@@ -4,7 +4,7 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { LoggerModule } from "nestjs-pino";
 import { validateEnv } from "./config/env.validation";
 import { HealthModule } from "./health/health.module";
-import type { ApiEnv } from "@saas/shared";
+import type { ApiEnv } from "./config/env.schema";
 
 @Module({
   imports: [

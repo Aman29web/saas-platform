@@ -7,7 +7,4 @@ module.exports = {
   collectCoverageFrom: ["**/*.(t|j)s"],
   coverageDirectory: "../coverage",
   testEnvironment: "node",
-  moduleNameMapper: {
-    "^@saas/shared$": "<rootDir>/../../../packages/shared/src/index.ts",
-  },
 };

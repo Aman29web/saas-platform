@@ -6,12 +6,12 @@ services:
     volumes:
       - redis-data:/data
 
-  api:
+  backend:
     build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     env_file:
-      - apps/api/.env
+      - backend/.env
     ports:
       - "4000:4000"
     depends_on:

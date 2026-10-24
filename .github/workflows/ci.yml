@@ -6,8 +6,11 @@ on:
   pull_request:
 
 jobs:
-  build-and-test:
+  backend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     services:
       redis:
         image: redis:7-alpine
@@ -25,6 +28,7 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -42,6 +46,40 @@ jobs:
           REDIS_URL: redis://localhost:6379
           JWT_ACCESS_SECRET: ci-access-secret-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
           JWT_REFRESH_SECRET: ci-refresh-secret-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+      - name: Build
+        run: pnpm build
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
 
       - name: Build
         run: pnpm build

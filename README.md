@@ -5,22 +5,26 @@ and role-based access, per-tenant data isolation on MongoDB, Stripe
 subscription billing, usage metering with quota enforcement, email-based
 invitations, an audit log, and admin impersonation.
 
-Build status: **Module A — scaffold & config** complete.
+Build status: **Module A — scaffold & config** complete. Module B in progress.
 
 ## Stack
 
 - **Frontend**: React 18 + TypeScript + Vite, Tailwind CSS, TanStack Query, React Router, React Hook Form + Zod
 - **Backend**: NestJS + TypeScript, MongoDB Atlas + Mongoose, Stripe, Resend, BullMQ + Redis, JWT
-- **Infra**: pnpm workspaces monorepo, docker-compose, GitHub Actions CI, Stripe CLI (local webhook forwarding)
+- **Infra**: docker-compose, GitHub Actions CI, Stripe CLI (local webhook forwarding)
 
-## Monorepo layout
+## Repository layout
+
+`backend/` and `frontend/` are **fully independent projects** — separate
+`package.json`, separate lockfile, separate install/build/test/lint. There is
+no shared workspace or shared package between them; the small amount of
+overlap (role/plan enums, auth DTOs) is intentionally duplicated in each
+project rather than imported from a common package, so either one could be
+extracted to its own repository with no further untangling.
 
 ```
-apps/
-  api/      NestJS backend
-  web/      React frontend
-packages/
-  shared/   Shared Zod schemas, types, env validation
+backend/    NestJS API (own package.json, own tests, own Dockerfile)
+frontend/   React app (own package.json, own tests)
 docs/
   adr/      Architecture decision records
 ```
@@ -36,24 +40,34 @@ docs/
 ### Setup
 
 ```bash
+# backend
+cd backend
 pnpm install
-cp apps/api/.env.example apps/api/.env   # fill in MONGO_URI, JWT secrets, etc.
-cp apps/web/.env.example apps/web/.env
+cp .env.example .env   # fill in MONGO_URI, JWT secrets, etc.
+pnpm dev                # http://localhost:4000/api/health
+
+# frontend (separate terminal)
+cd frontend
+pnpm install
+cp .env.example .env
+pnpm dev                # http://localhost:5173
+```
+
+```bash
+# Redis, from the repo root
 docker-compose up -d redis
-pnpm dev:api     # http://localhost:4000/api/health
-pnpm dev:web     # http://localhost:5173
 ```
 
 ### Env validation
 
-Both apps validate their environment with Zod at boot (`packages/shared/src/env.ts`).
+The backend validates its environment with Zod at boot (`backend/src/config/env.schema.ts`).
 Missing or malformed variables cause an immediate, descriptive startup failure
 rather than a runtime surprise later.
 
-### Scripts
+### Scripts (run from inside `backend/` or `frontend/`)
 
-- `pnpm lint` / `pnpm typecheck` / `pnpm test` / `pnpm build` — run across all workspace packages
-- `pnpm seed` — (added in Module C) seeds sample tenants/users
+- `pnpm lint` / `pnpm typecheck` / `pnpm test` / `pnpm build`
+- `pnpm seed` (backend, added in Module C) — seeds sample tenants/users
 
 ## Architecture decisions
 
