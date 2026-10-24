@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document, Types } from "mongoose";
+import { Document, Schema as MongooseSchema, Types } from "mongoose";
 import { PLANS, SUBSCRIPTION_STATUSES, type Plan, type SubscriptionStatus } from "../../common/enums";
 
 @Schema({ timestamps: true, collection: "organizations" })
@@ -12,7 +12,7 @@ export class Organization {
   @Prop({ required: true, unique: true, lowercase: true, trim: true, index: true })
   slug!: string;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: "User" })
+  @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: "User" })
   ownerId!: Types.ObjectId;
 
   @Prop()
