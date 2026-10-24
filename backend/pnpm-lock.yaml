@@ -47,6 +47,9 @@ importers:
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
+      ioredis:
+        specifier: ^5.4.1
+        version: 5.11.1
       mongoose:
         specifier: ^8.8.0
         version: 8.24.7

@@ -1,12 +1,15 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from "@nestjs/mongoose";
+import { BullModule } from "@nestjs/bullmq";
+import Redis from "ioredis";
 import { LoggerModule } from "nestjs-pino";
 import { validateEnv } from "./config/env.validation";
 import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./auth/auth.module";
 import { ProjectsModule } from "./projects/projects.module";
 import { AdminModule } from "./admin/admin.module";
+import { InvitationsModule } from "./invitations/invitations.module";
 import type { ApiEnv } from "./config/env.schema";
 
 @Module({
@@ -31,10 +34,17 @@ import type { ApiEnv } from "./config/env.schema";
         uri: config.get("MONGO_URI", { infer: true }),
       }),
     }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<ApiEnv, true>) => ({
+        connection: new Redis(config.get("REDIS_URL", { infer: true }), { maxRetriesPerRequest: null }),
+      }),
+    }),
     HealthModule,
     AuthModule,
     ProjectsModule,
     AdminModule,
+    InvitationsModule,
   ],
 })
 export class AppModule {}

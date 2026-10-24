@@ -5,8 +5,8 @@ and role-based access, per-tenant data isolation on MongoDB, Stripe
 subscription billing, usage metering with quota enforcement, email-based
 invitations, an audit log, and admin impersonation.
 
-Build status: **Modules A–D complete** (scaffold, auth/sessions, tenant
-isolation, RBAC). Module E (invitations) next.
+Build status: **Modules A–E complete** (scaffold, auth/sessions, tenant
+isolation, RBAC, invitations & email). Module F (Stripe billing) next.
 
 ## Stack
 
@@ -35,7 +35,8 @@ docs/
 ### Prerequisites
 - Node 20+, pnpm 9+
 - A MongoDB Atlas connection string (or any reachable Mongo instance) — set as `MONGO_URI`
-- Redis (via `docker-compose up redis`, or any local Redis)
+- Redis (via `docker-compose up redis`, or any local Redis) — required from Module E onward for the BullMQ invite-email queue
+- A Resend API key (optional in dev — with none set, invite emails are logged and skipped instead of sent)
 - Stripe CLI (`stripe listen --forward-to localhost:4000/api/billing/webhook`) — from Module F onward
 
 ### Setup
