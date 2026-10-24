@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Global, Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { MongooseModule } from "@nestjs/mongoose";
 import { RefreshToken, RefreshTokenSchema } from "./schemas/refresh-token.schema";
@@ -11,6 +11,9 @@ import { UsersModule } from "../users/users.module";
 import { OrganizationsModule } from "../organizations/organizations.module";
 import { MembershipsModule } from "../memberships/memberships.module";
 
+// Global: AuthGuard/TokensService are cross-cutting and used by every
+// tenant-owned module's controllers via @UseGuards(AuthGuard, ...).
+@Global()
 @Module({
   imports: [
     JwtModule.register({}),

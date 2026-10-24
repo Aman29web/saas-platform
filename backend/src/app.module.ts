@@ -5,6 +5,8 @@ import { LoggerModule } from "nestjs-pino";
 import { validateEnv } from "./config/env.validation";
 import { HealthModule } from "./health/health.module";
 import { AuthModule } from "./auth/auth.module";
+import { ProjectsModule } from "./projects/projects.module";
+import { AdminModule } from "./admin/admin.module";
 import type { ApiEnv } from "./config/env.schema";
 
 @Module({
@@ -31,6 +33,8 @@ import type { ApiEnv } from "./config/env.schema";
     }),
     HealthModule,
     AuthModule,
+    ProjectsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

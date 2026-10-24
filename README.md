@@ -5,7 +5,8 @@ and role-based access, per-tenant data isolation on MongoDB, Stripe
 subscription billing, usage metering with quota enforcement, email-based
 invitations, an audit log, and admin impersonation.
 
-Build status: **Module A — scaffold & config** complete. Module B in progress.
+Build status: **Modules A–C complete** (scaffold, auth/sessions, tenant
+isolation). Module D (RBAC) next.
 
 ## Stack
 
@@ -74,7 +75,7 @@ rather than a runtime surprise later.
 See [`docs/adr/`](docs/adr/) for recorded trade-offs. Written as the relevant
 module lands:
 
-- Tenant isolation strategy (Module C)
+- [Tenant isolation strategy](docs/adr/0001-tenant-isolation.md) (Module C) ✅
 - Webhook idempotency (Module G)
 - Subscription state machine (Module F)
 - RBAC model (Module D)
@@ -84,5 +85,9 @@ module lands:
 Single shared database; every tenant-owned document carries an indexed
 `tenantId`. Isolation is enforced by a Mongoose plugin that injects the
 request-scoped tenant into every query and write — not by convention in
-service code. Full rationale and the cross-tenant-access proof test land in
-Module C.
+service code, and it fails closed (throws) rather than running unscoped if
+the context is missing. A platform-admin escape hatch exists for legitimate
+cross-tenant reads, gated to platform admins and logged before it runs.
+Full rationale, the two non-obvious NestJS pitfalls that shaped the
+guard/interceptor split, and the cross-tenant proof test are in
+[ADR 0001](docs/adr/0001-tenant-isolation.md).
