@@ -1,19 +1,32 @@
 import { BadRequestException, CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 import type { Request } from "express";
 import { MembershipsService } from "../memberships/memberships.service";
 import { UsersService } from "../users/users.service";
 import { TokensService } from "../auth/tokens.service";
+import { PERMISSION_KEY } from "../rbac/require-permission.decorator";
+import { roleHasPermission, type Permission } from "../rbac/permissions";
 import type { TenantContextData } from "./tenant-context";
 import type { AuthenticatedUser } from "../auth/auth.guard";
 
 export type TenantScopedRequest = Request & { user: AuthenticatedUser; tenantContext: TenantContextData };
 
 /**
- * Authenticates the request and resolves which organization it operates on,
- * rejecting (401/400/403) before the handler ever runs. This guard only
- * VALIDATES and attaches the result to `request.tenantContext` — it does
- * NOT establish the AsyncLocalStorage scope itself (see tenant-context.ts
- * for why). TenantContextInterceptor does that, downstream.
+ * Authenticates the request, resolves which organization it operates on,
+ * and enforces @RequirePermission() — all in one guard, rejecting
+ * (401/400/403) before the handler ever runs.
+ *
+ * Permission enforcement lives here rather than in a separate
+ * PermissionGuard for the same reason tenant resolution isn't split across
+ * two guards: NestJS runs every guard in a @UseGuards() array in parallel
+ * via Promise.all, so a second guard reading `request.tenantContext.role`
+ * set by this one would race it. One guard, sequential internal logic, no
+ * race.
+ *
+ * This guard only VALIDATES and attaches the result to
+ * `request.tenantContext` — it does NOT establish the AsyncLocalStorage
+ * scope itself (see tenant-context.ts for why). TenantContextInterceptor
+ * does that, downstream.
  */
 @Injectable()
 export class TenantContextGuard implements CanActivate {
@@ -21,6 +34,7 @@ export class TenantContextGuard implements CanActivate {
     private readonly tokensService: TokensService,
     private readonly usersService: UsersService,
     private readonly membershipsService: MembershipsService,
+    private readonly reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -56,6 +70,15 @@ export class TenantContextGuard implements CanActivate {
       userId: request.user.id,
       role: membership.role,
     };
+
+    const requiredPermission = this.reflector.getAllAndOverride<Permission | undefined>(PERMISSION_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (requiredPermission && !roleHasPermission(membership.role, requiredPermission)) {
+      throw new ForbiddenException(`Role '${membership.role}' does not have permission '${requiredPermission}'`);
+    }
 
     return true;
   }

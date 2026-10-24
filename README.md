@@ -5,8 +5,8 @@ and role-based access, per-tenant data isolation on MongoDB, Stripe
 subscription billing, usage metering with quota enforcement, email-based
 invitations, an audit log, and admin impersonation.
 
-Build status: **Modules A–C complete** (scaffold, auth/sessions, tenant
-isolation). Module D (RBAC) next.
+Build status: **Modules A–D complete** (scaffold, auth/sessions, tenant
+isolation, RBAC). Module E (invitations) next.
 
 ## Stack
 
@@ -76,9 +76,9 @@ See [`docs/adr/`](docs/adr/) for recorded trade-offs. Written as the relevant
 module lands:
 
 - [Tenant isolation strategy](docs/adr/0001-tenant-isolation.md) (Module C) ✅
+- [RBAC model](docs/adr/0002-rbac-model.md) (Module D) ✅
 - Webhook idempotency (Module G)
 - Subscription state machine (Module F)
-- RBAC model (Module D)
 
 ## Tenant isolation (summary)
 
