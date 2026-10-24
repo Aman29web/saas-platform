@@ -19,6 +19,10 @@ export class OrganizationsService {
     return this.orgModel.findOne({ slug }).exec();
   }
 
+  async setStripeCustomerId(orgId: string | Types.ObjectId, stripeCustomerId: string) {
+    await this.orgModel.updateOne({ _id: orgId }, { stripeCustomerId }).exec();
+  }
+
   private async generateUniqueSlug(name: string, session?: ClientSession): Promise<string> {
     const base = slugify(name) || "org";
     let candidate = base;

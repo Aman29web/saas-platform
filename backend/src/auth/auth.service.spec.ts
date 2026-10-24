@@ -40,6 +40,7 @@ describe("AuthService", () => {
       revokeAllForUser: jest.fn(),
       verifyMatches: jest.fn(),
     };
+    const subscriptionModel = { create: jest.fn().mockResolvedValue([{}]) };
 
     const service = new AuthService(
       connection as never,
@@ -48,9 +49,19 @@ describe("AuthService", () => {
       membershipsService as never,
       tokensService as never,
       refreshTokensService as never,
+      subscriptionModel as never,
     );
 
-    return { service, connection, usersService, organizationsService, membershipsService, tokensService, refreshTokensService };
+    return {
+      service,
+      connection,
+      usersService,
+      organizationsService,
+      membershipsService,
+      tokensService,
+      refreshTokensService,
+      subscriptionModel,
+    };
   }
 
   describe("signup", () => {
@@ -65,8 +76,15 @@ describe("AuthService", () => {
     });
 
     it("creates user, org, and membership inside one transaction, then issues tokens", async () => {
-      const { service, usersService, organizationsService, membershipsService, refreshTokensService, connection } =
-        buildService();
+      const {
+        service,
+        usersService,
+        organizationsService,
+        membershipsService,
+        refreshTokensService,
+        connection,
+        subscriptionModel,
+      } = buildService();
       usersService.findByEmail.mockResolvedValueOnce(null).mockResolvedValue(null);
       usersService.create.mockResolvedValue(baseUser);
       usersService.findById.mockResolvedValue(baseUser);
@@ -95,6 +113,10 @@ describe("AuthService", () => {
       expect(membershipsService.create).toHaveBeenCalledWith(
         { userId, orgId, role: "owner" },
         session,
+      );
+      expect(subscriptionModel.create).toHaveBeenCalledWith(
+        [{ tenantId: orgId.toString(), plan: "free", status: "active" }],
+        { session },
       );
       expect(result.tokens.accessToken).toBe("access-token");
       expect(session.endSession).toHaveBeenCalled();

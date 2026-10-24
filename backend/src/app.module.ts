@@ -10,6 +10,7 @@ import { AuthModule } from "./auth/auth.module";
 import { ProjectsModule } from "./projects/projects.module";
 import { AdminModule } from "./admin/admin.module";
 import { InvitationsModule } from "./invitations/invitations.module";
+import { BillingModule } from "./billing/billing.module";
 import type { ApiEnv } from "./config/env.schema";
 
 @Module({
@@ -45,6 +46,7 @@ import type { ApiEnv } from "./config/env.schema";
     ProjectsModule,
     AdminModule,
     InvitationsModule,
+    BillingModule,
   ],
 })
 export class AppModule {}

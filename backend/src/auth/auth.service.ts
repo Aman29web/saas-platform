@@ -1,12 +1,13 @@
 import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
-import { InjectConnection } from "@nestjs/mongoose";
-import { Connection, Types } from "mongoose";
+import { InjectConnection, InjectModel } from "@nestjs/mongoose";
+import { Connection, Model, Types } from "mongoose";
 import * as argon2 from "argon2";
 import { UsersService } from "../users/users.service";
 import { OrganizationsService } from "../organizations/organizations.service";
 import { MembershipsService } from "../memberships/memberships.service";
 import { TokensService } from "./tokens.service";
 import { RefreshTokensService } from "./refresh-tokens.service";
+import { Subscription, SubscriptionDocument } from "../billing/schemas/subscription.schema";
 import type { SignupDto, LoginDto } from "./dto/auth.dto";
 
 export interface AuthTokens {
@@ -23,6 +24,7 @@ export class AuthService {
     private readonly membershipsService: MembershipsService,
     private readonly tokensService: TokensService,
     private readonly refreshTokensService: RefreshTokensService,
+    @InjectModel(Subscription.name) private readonly subscriptionModel: Model<SubscriptionDocument>,
   ) {}
 
   async signup(dto: SignupDto) {
@@ -44,6 +46,14 @@ export class AuthService {
         await this.membershipsService.create(
           { userId: user._id, orgId: org._id, role: "owner" },
           session,
+        );
+        // tenantId set explicitly (not left to tenantScopePlugin's
+        // pre-validate hook) because there's no established TenantContext
+        // during signup — the plugin's query hooks still fully apply to
+        // this document on every later read/update.
+        await this.subscriptionModel.create(
+          [{ tenantId: org._id.toString(), plan: "free", status: "active" }],
+          { session },
         );
         return { user, org };
       });
