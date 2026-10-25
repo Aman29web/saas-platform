@@ -7,6 +7,7 @@ import { AuthModule } from "../auth/auth.module";
 import { TenancyModule } from "../tenancy/tenancy.module";
 import { UsersModule } from "../users/users.module";
 import { MembershipsModule } from "../memberships/memberships.module";
+import { UsageModule } from "../usage/usage.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MembershipsModule } from "../memberships/memberships.module";
     // reachable here, not just inside AuthModule/TenancyModule.
     UsersModule,
     MembershipsModule,
+    UsageModule,
   ],
   providers: [ProjectsService],
   controllers: [ProjectsController],

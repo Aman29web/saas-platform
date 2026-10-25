@@ -5,9 +5,9 @@ and role-based access, per-tenant data isolation on MongoDB, Stripe
 subscription billing, usage metering with quota enforcement, email-based
 invitations, an audit log, and admin impersonation.
 
-Build status: **Modules A–G complete** (scaffold, auth/sessions, tenant
+Build status: **Modules A–H complete** (scaffold, auth/sessions, tenant
 isolation, RBAC, invitations & email, Stripe billing, webhook
-idempotency). Module H (usage metering & quotas) next.
+idempotency, usage metering & quotas). Module I (audit log) next.
 
 ## Stack
 

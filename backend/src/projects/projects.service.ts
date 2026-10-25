@@ -3,15 +3,22 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { Project, ProjectDocument } from "./schemas/project.schema";
 import { TenantContext } from "../tenancy/tenant-context";
+import { QuotaService } from "../usage/quota.service";
 import type { CreateProjectDto, UpdateProjectDto } from "./dto/project.dto";
 
 @Injectable()
 export class ProjectsService {
-  constructor(@InjectModel(Project.name) private readonly projectModel: Model<ProjectDocument>) {}
+  constructor(
+    @InjectModel(Project.name) private readonly projectModel: Model<ProjectDocument>,
+    private readonly quotaService: QuotaService,
+  ) {}
 
   async create(dto: CreateProjectDto) {
     const ctx = TenantContext.get();
     if (!ctx) throw new Error("ProjectsService.create called with no tenant context");
+
+    await this.quotaService.assertProjectQuotaNotExceeded();
+    await this.quotaService.meterApiCallAndEnforceQuota();
 
     // tenantId is stamped automatically by tenantScopePlugin's pre('save') hook.
     return this.projectModel.create({ name: dto.name, createdBy: ctx.userId });

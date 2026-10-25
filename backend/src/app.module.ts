@@ -11,6 +11,8 @@ import { ProjectsModule } from "./projects/projects.module";
 import { AdminModule } from "./admin/admin.module";
 import { InvitationsModule } from "./invitations/invitations.module";
 import { BillingModule } from "./billing/billing.module";
+import { UsageModule } from "./usage/usage.module";
+import { UsageRollupModule } from "./usage/usage-rollup.module";
 import type { ApiEnv } from "./config/env.schema";
 
 @Module({
@@ -47,6 +49,8 @@ import type { ApiEnv } from "./config/env.schema";
     AdminModule,
     InvitationsModule,
     BillingModule,
+    UsageModule,
+    UsageRollupModule,
   ],
 })
 export class AppModule {}

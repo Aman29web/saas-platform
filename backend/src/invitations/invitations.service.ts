@@ -8,6 +8,8 @@ import { MembershipsService } from "../memberships/memberships.service";
 import { OrganizationsService } from "../organizations/organizations.service";
 import { UsersService } from "../users/users.service";
 import { EmailQueueService } from "../notifications/email-queue.service";
+import { QuotaService } from "../usage/quota.service";
+import { SubscriptionsService } from "../billing/subscriptions.service";
 import type { InviteMemberDto } from "./dto/invitation.dto";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -20,6 +22,8 @@ export class InvitationsService {
     private readonly organizationsService: OrganizationsService,
     private readonly usersService: UsersService,
     private readonly emailQueueService: EmailQueueService,
+    private readonly quotaService: QuotaService,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
   async invite(dto: InviteMemberDto, webAppUrl: string) {
@@ -113,10 +117,16 @@ export class InvitationsService {
     }
 
     const tenantId = invitation.tenantId;
+
+    const existingMembership = await this.membershipsService.findOne(acceptingUser.id, tenantId);
+    if (!existingMembership) {
+      const plan = await this.subscriptionsService.findPlanByTenantId(tenantId);
+      await this.quotaService.assertSeatQuotaNotExceededForOrg(tenantId, plan);
+    }
+
     return TenantContext.run(
       { tenantId, userId: acceptingUser.id, role: invitation.role },
       async () => {
-        const existingMembership = await this.membershipsService.findOne(acceptingUser.id, tenantId);
         if (!existingMembership) {
           await this.membershipsService.create({
             userId: new Types.ObjectId(acceptingUser.id),

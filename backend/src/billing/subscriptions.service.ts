@@ -72,4 +72,14 @@ export class SubscriptionsService {
     const raw = await this.subscriptionModel.collection.findOne({ stripeSubscriptionId });
     return raw ? (raw.tenantId as string) : null;
   }
+
+  /**
+   * Same native-driver bypass, used by QuotaService to check a seat quota
+   * for an org the caller doesn't have tenant context for yet (they're
+   * accepting an invitation, not yet a member).
+   */
+  async findPlanByTenantId(tenantId: string): Promise<Plan> {
+    const raw = await this.subscriptionModel.collection.findOne({ tenantId });
+    return (raw?.plan as Plan) ?? "free";
+  }
 }

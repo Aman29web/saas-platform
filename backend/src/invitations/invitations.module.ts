@@ -10,6 +10,8 @@ import { UsersModule } from "../users/users.module";
 import { MembershipsModule } from "../memberships/memberships.module";
 import { OrganizationsModule } from "../organizations/organizations.module";
 import { NotificationsModule } from "../notifications/notifications.module";
+import { BillingModule } from "../billing/billing.module";
+import { UsageModule } from "../usage/usage.module";
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { NotificationsModule } from "../notifications/notifications.module";
     MembershipsModule,
     OrganizationsModule,
     NotificationsModule,
+    BillingModule,
+    UsageModule,
   ],
   providers: [InvitationsService],
   controllers: [InvitationsController, InvitationsPublicController],
