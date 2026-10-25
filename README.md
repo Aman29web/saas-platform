@@ -5,9 +5,9 @@ and role-based access, per-tenant data isolation on MongoDB, Stripe
 subscription billing, usage metering with quota enforcement, email-based
 invitations, an audit log, and admin impersonation.
 
-Build status: **Modules A–F complete** (scaffold, auth/sessions, tenant
-isolation, RBAC, invitations & email, Stripe billing). Module G (webhook
-idempotency) next.
+Build status: **Modules A–G complete** (scaffold, auth/sessions, tenant
+isolation, RBAC, invitations & email, Stripe billing, webhook
+idempotency). Module H (usage metering & quotas) next.
 
 ## Stack
 
@@ -39,7 +39,7 @@ docs/
 - Redis (via `docker-compose up redis`, or any local Redis) — required from Module E onward for the BullMQ invite-email queue
 - A Resend API key (optional in dev — with none set, invite emails are logged and skipped instead of sent)
 - A Stripe test-mode secret key + two recurring prices (`STRIPE_SECRET_KEY`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_BUSINESS`) to exercise checkout/portal/change-plan/cancel against real Stripe
-- Stripe CLI (`stripe listen --forward-to localhost:4000/api/billing/webhook`) — from Module G onward, once the webhook endpoint exists
+- Stripe CLI (`stripe listen --forward-to localhost:4000/api/billing/webhook`) to forward real webhook events to your local server — set the forwarding secret it prints as `STRIPE_WEBHOOK_SECRET`
 
 ### Setup
 
@@ -81,7 +81,7 @@ module lands:
 - [Tenant isolation strategy](docs/adr/0001-tenant-isolation.md) (Module C) ✅
 - [RBAC model](docs/adr/0002-rbac-model.md) (Module D) ✅
 - [Subscription state machine](docs/adr/0003-subscription-state-machine.md) (Module F) ✅
-- Webhook idempotency (Module G)
+- [Webhook idempotency](docs/adr/0004-webhook-idempotency.md) (Module G) ✅
 
 ## Tenant isolation (summary)
 

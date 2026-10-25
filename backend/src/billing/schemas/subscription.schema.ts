@@ -37,6 +37,17 @@ export class Subscription {
   @Prop({ default: false })
   cancelAtPeriodEnd!: boolean;
 
+  /**
+   * The `created` timestamp of the last Stripe webhook event that actually
+   * updated this document — not when WE wrote it, when STRIPE says the
+   * event happened. Lets applyStripeChange detect and discard an
+   * out-of-order webhook (one whose event is older than what's already
+   * been applied) instead of letting stale data clobber newer state.
+   * Unset for action-initiated (non-webhook) writes, which always apply.
+   */
+  @Prop()
+  lastReconciledEventAt?: Date;
+
   createdAt!: Date;
   updatedAt!: Date;
 }
