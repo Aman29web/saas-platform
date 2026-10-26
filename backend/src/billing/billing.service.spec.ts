@@ -20,6 +20,7 @@ describe("BillingService", () => {
       getForActiveOrgOrThrow: jest.fn(),
       applyStripeChange: jest.fn(),
     };
+    const auditLogService = { record: jest.fn() };
     const config = {
       get: jest.fn((key: string) => {
         const values: Record<string, string> = {
@@ -35,10 +36,11 @@ describe("BillingService", () => {
       stripe as never,
       organizationsService as never,
       subscriptionsService as never,
+      auditLogService as never,
       config as never,
     );
 
-    return { service, stripe, organizationsService, subscriptionsService, config };
+    return { service, stripe, organizationsService, subscriptionsService, auditLogService, config };
   }
 
   describe("createCheckoutSession", () => {

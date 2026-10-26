@@ -10,6 +10,7 @@ import { UsersService } from "../users/users.service";
 import { EmailQueueService } from "../notifications/email-queue.service";
 import { QuotaService } from "../usage/quota.service";
 import { SubscriptionsService } from "../billing/subscriptions.service";
+import { AuditLogService } from "../audit-log/audit-log.service";
 import type { InviteMemberDto } from "./dto/invitation.dto";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -24,6 +25,7 @@ export class InvitationsService {
     private readonly emailQueueService: EmailQueueService,
     private readonly quotaService: QuotaService,
     private readonly subscriptionsService: SubscriptionsService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async invite(dto: InviteMemberDto, webAppUrl: string) {
@@ -49,6 +51,10 @@ export class InvitationsService {
     });
 
     await this.sendInviteEmail(invitation, rawToken, ctx.userId, webAppUrl);
+    await this.auditLogService.record("invitation.created", "invitation", invitation._id.toString(), {
+      email: dto.email,
+      role: dto.role,
+    });
     return invitation;
   }
 
@@ -84,6 +90,9 @@ export class InvitationsService {
 
     invitation.revokedAt = new Date();
     await invitation.save();
+    await this.auditLogService.record("invitation.revoked", "invitation", invitation._id.toString(), {
+      email: invitation.email,
+    });
     return invitation;
   }
 
@@ -106,7 +115,7 @@ export class InvitationsService {
     return raw as unknown as InvitationDocument;
   }
 
-  async accept(rawToken: string, acceptingUser: { id: string; email: string }) {
+  async accept(rawToken: string, acceptingUser: { id: string; email: string }, ip?: string) {
     const invitation = await this.findByRawToken(rawToken);
     if (!invitation) throw new NotFoundException("Invitation not found or already used");
     if (invitation.revokedAt) throw new ConflictException("Invitation was revoked");
@@ -125,7 +134,7 @@ export class InvitationsService {
     }
 
     return TenantContext.run(
-      { tenantId, userId: acceptingUser.id, role: invitation.role },
+      { tenantId, userId: acceptingUser.id, role: invitation.role, ip },
       async () => {
         if (!existingMembership) {
           await this.membershipsService.create({
@@ -133,6 +142,10 @@ export class InvitationsService {
             orgId: new Types.ObjectId(tenantId),
             role: invitation.role,
             invitedBy: invitation.invitedBy,
+          });
+          await this.auditLogService.record("membership.created", "membership", acceptingUser.id, {
+            role: invitation.role,
+            via: "invitation",
           });
         }
 

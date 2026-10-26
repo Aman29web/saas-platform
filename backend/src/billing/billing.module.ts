@@ -13,6 +13,7 @@ import { TenancyModule } from "../tenancy/tenancy.module";
 import { UsersModule } from "../users/users.module";
 import { MembershipsModule } from "../memberships/memberships.module";
 import { OrganizationsModule } from "../organizations/organizations.module";
+import { AuditLogModule } from "../audit-log/audit-log.module";
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { OrganizationsModule } from "../organizations/organizations.module";
     UsersModule,
     MembershipsModule,
     OrganizationsModule,
+    AuditLogModule,
   ],
   providers: [BillingService, SubscriptionsService, WebhooksService],
   controllers: [BillingController, WebhooksController],

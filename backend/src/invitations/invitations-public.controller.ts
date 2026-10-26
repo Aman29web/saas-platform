@@ -1,4 +1,6 @@
-import { Body, Controller, Get, NotFoundException, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, NotFoundException, Param, Post, Req, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
+import type { Request } from "express";
 import { AuthGuard, type AuthenticatedUser } from "../auth/auth.guard";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
@@ -20,6 +22,7 @@ export class InvitationsPublicController {
     private readonly organizationsService: OrganizationsService,
   ) {}
 
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @Get(":token")
   async preview(@Param("token") token: string) {
     const invitation = await this.invitationsService.findByRawToken(token);
@@ -36,12 +39,14 @@ export class InvitationsPublicController {
     };
   }
 
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @Post("accept")
   @UseGuards(AuthGuard)
   accept(
     @Body(new ZodValidationPipe(acceptInviteSchema)) dto: AcceptInviteDto,
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
   ) {
-    return this.invitationsService.accept(dto.token, user);
+    return this.invitationsService.accept(dto.token, user, req.ip);
   }
 }

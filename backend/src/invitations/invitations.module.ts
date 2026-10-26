@@ -12,6 +12,7 @@ import { OrganizationsModule } from "../organizations/organizations.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { BillingModule } from "../billing/billing.module";
 import { UsageModule } from "../usage/usage.module";
+import { AuditLogModule } from "../audit-log/audit-log.module";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UsageModule } from "../usage/usage.module";
     NotificationsModule,
     BillingModule,
     UsageModule,
+    AuditLogModule,
   ],
   providers: [InvitationsService],
   controllers: [InvitationsController, InvitationsPublicController],

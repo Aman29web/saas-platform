@@ -6,6 +6,7 @@ import { SubscriptionsService } from "./subscriptions.service";
 import { OrganizationsService } from "../organizations/organizations.service";
 import { TenantContext } from "../tenancy/tenant-context";
 import { priceIdForPlan, planForPriceId } from "./plan-prices";
+import { AuditLogService } from "../audit-log/audit-log.service";
 import type { Plan } from "../common/enums";
 import type { ApiEnv } from "../config/env.schema";
 
@@ -15,6 +16,7 @@ export class BillingService {
     @Inject(STRIPE_CLIENT) private readonly stripe: Stripe,
     private readonly organizationsService: OrganizationsService,
     private readonly subscriptionsService: SubscriptionsService,
+    private readonly auditLogService: AuditLogService,
     private readonly config: ConfigService<ApiEnv, true>,
   ) {}
 
@@ -78,7 +80,7 @@ export class BillingService {
       proration_behavior: "create_prorations",
     });
 
-    return this.subscriptionsService.applyStripeChange({
+    const result = await this.subscriptionsService.applyStripeChange({
       stripeSubscriptionId: updated.id,
       stripePriceId: newPriceId,
       plan: newPlan,
@@ -86,6 +88,11 @@ export class BillingService {
       currentPeriodEnd: new Date(updated.current_period_end * 1000),
       cancelAtPeriodEnd: updated.cancel_at_period_end,
     });
+    await this.auditLogService.record("subscription.plan_changed", "subscription", updated.id, {
+      newPlan,
+      previousPlan: subscription.plan,
+    });
+    return result;
   }
 
   async cancel(atPeriodEnd: boolean) {
@@ -98,7 +105,7 @@ export class BillingService {
       const updated = await this.stripe.subscriptions.update(subscription.stripeSubscriptionId, {
         cancel_at_period_end: true,
       });
-      return this.subscriptionsService.applyStripeChange({
+      const result = await this.subscriptionsService.applyStripeChange({
         stripeSubscriptionId: updated.id,
         stripePriceId: subscription.stripePriceId,
         plan: subscription.plan,
@@ -106,16 +113,24 @@ export class BillingService {
         currentPeriodEnd: new Date(updated.current_period_end * 1000),
         cancelAtPeriodEnd: true,
       });
+      await this.auditLogService.record("subscription.cancel_scheduled", "subscription", updated.id, {
+        atPeriodEnd: true,
+      });
+      return result;
     }
 
     const cancelled = await this.stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
-    return this.subscriptionsService.applyStripeChange({
+    const result = await this.subscriptionsService.applyStripeChange({
       stripeSubscriptionId: cancelled.id,
       stripePriceId: subscription.stripePriceId,
       plan: "free",
       status: "canceled",
       cancelAtPeriodEnd: false,
     });
+    await this.auditLogService.record("subscription.cancelled", "subscription", cancelled.id, {
+      atPeriodEnd: false,
+    });
+    return result;
   }
 
   private async ensureStripeCustomer(orgId: string): Promise<string> {

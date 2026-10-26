@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Throttle } from "@nestjs/throttler";
 import { TenantContextGuard } from "../tenancy/tenant-context.guard";
 import { TenantContextInterceptor } from "../tenancy/tenant-context.interceptor";
 import { RequirePermission } from "../rbac/require-permission.decorator";
@@ -17,6 +18,7 @@ export class InvitationsController {
     private readonly config: ConfigService<ApiEnv, true>,
   ) {}
 
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @Post()
   @RequirePermission("members:invite")
   invite(@Body(new ZodValidationPipe(inviteMemberSchema)) dto: InviteMemberDto) {

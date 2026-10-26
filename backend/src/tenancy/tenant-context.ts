@@ -6,6 +6,7 @@ export interface TenantContextData {
   userId: string;
   role: Role;
   impersonatorId?: string;
+  ip?: string;
 }
 
 const storage = new AsyncLocalStorage<TenantContextData>();
