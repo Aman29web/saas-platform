@@ -12,8 +12,17 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
   app.useLogger(app.get(Logger));
   app.use(cookieParser());
+  const allowedOrigins = [process.env.WEB_APP_URL ?? "http://localhost:5173"];
+  const vercelPreviewPattern = process.env.VERCEL_PREVIEW_ORIGIN_REGEX
+    ? new RegExp(process.env.VERCEL_PREVIEW_ORIGIN_REGEX)
+    : null;
   app.enableCors({
-    origin: process.env.WEB_APP_URL ?? "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (vercelPreviewPattern?.test(origin)) return callback(null, true);
+      callback(new Error(`Origin ${origin} not allowed by CORS`), false);
+    },
     credentials: true,
   });
   app.setGlobalPrefix("api");
