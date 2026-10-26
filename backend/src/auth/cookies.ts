@@ -9,11 +9,15 @@ export function setAuthCookies(
 ) {
   const isProd = config.get("NODE_ENV", { infer: true }) === "production";
   const domain = config.get("COOKIE_DOMAIN", { infer: true });
+  // Frontend and API live on different origins in production (e.g. Vercel +
+  // Railway), so cookies must be SameSite=None to be sent on cross-site
+  // fetch/XHR — browsers require Secure whenever SameSite=None is used.
+  const sameSite = isProd ? ("none" as const) : ("lax" as const);
 
   res.cookie("access_token", tokens.accessToken, {
     httpOnly: true,
     secure: isProd,
-    sameSite: "lax",
+    sameSite,
     path: "/",
     domain,
     maxAge: 15 * 60 * 1000,
@@ -22,7 +26,7 @@ export function setAuthCookies(
   res.cookie("refresh_token", tokens.refreshToken, {
     httpOnly: true,
     secure: isProd,
-    sameSite: "lax",
+    sameSite,
     path: "/",
     domain,
     maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -49,7 +53,8 @@ export function setImpersonationCookies(
 ) {
   const isProd = config.get("NODE_ENV", { infer: true }) === "production";
   const domain = config.get("COOKIE_DOMAIN", { infer: true });
-  const cookieOpts = { httpOnly: true, secure: isProd, sameSite: "lax" as const, path: "/", domain };
+  const sameSite = isProd ? ("none" as const) : ("lax" as const);
+  const cookieOpts = { httpOnly: true, secure: isProd, sameSite, path: "/", domain };
 
   res.cookie("admin_access_token", tokens.adminAccessToken, { ...cookieOpts, maxAge: 60 * 60 * 1000 });
   res.cookie("access_token", tokens.impersonationAccessToken, { ...cookieOpts, maxAge: 15 * 60 * 1000 });
@@ -58,7 +63,8 @@ export function setImpersonationCookies(
 export function restoreAdminCookies(res: Response, config: ConfigService<ApiEnv, true>, adminAccessToken: string) {
   const isProd = config.get("NODE_ENV", { infer: true }) === "production";
   const domain = config.get("COOKIE_DOMAIN", { infer: true });
-  const cookieOpts = { httpOnly: true, secure: isProd, sameSite: "lax" as const, path: "/", domain };
+  const sameSite = isProd ? ("none" as const) : ("lax" as const);
+  const cookieOpts = { httpOnly: true, secure: isProd, sameSite, path: "/", domain };
 
   res.cookie("access_token", adminAccessToken, { ...cookieOpts, maxAge: 15 * 60 * 1000 });
   res.clearCookie("admin_access_token", { path: "/", domain });
