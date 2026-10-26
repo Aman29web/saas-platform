@@ -6,6 +6,7 @@ import type { ApiEnv } from "../config/env.schema";
 export interface AccessTokenPayload {
   sub: string;
   email: string;
+  impersonatorId?: string;
 }
 
 export interface RefreshTokenPayload {
@@ -20,10 +21,10 @@ export class TokensService {
     private readonly config: ConfigService<ApiEnv, true>,
   ) {}
 
-  signAccessToken(payload: AccessTokenPayload): Promise<string> {
+  signAccessToken(payload: AccessTokenPayload, expiresIn?: string): Promise<string> {
     return this.jwtService.signAsync(payload, {
       secret: this.config.get("JWT_ACCESS_SECRET", { infer: true }),
-      expiresIn: this.config.get("JWT_ACCESS_TTL", { infer: true }),
+      expiresIn: expiresIn ?? this.config.get("JWT_ACCESS_TTL", { infer: true }),
     });
   }
 

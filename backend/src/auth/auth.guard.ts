@@ -7,6 +7,7 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   isPlatformAdmin: boolean;
+  impersonatorId?: string;
 }
 
 @Injectable()
@@ -31,7 +32,12 @@ export class AuthGuard implements CanActivate {
     const user = await this.usersService.findById(payload.sub);
     if (!user) throw new UnauthorizedException("User no longer exists");
 
-    request.user = { id: user._id.toString(), email: user.email, isPlatformAdmin: user.isPlatformAdmin };
+    request.user = {
+      id: user._id.toString(),
+      email: user.email,
+      isPlatformAdmin: user.isPlatformAdmin,
+      impersonatorId: payload.impersonatorId,
+    };
     return true;
   }
 }

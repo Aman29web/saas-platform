@@ -5,7 +5,7 @@ import { MembershipsService } from "../memberships/memberships.service";
 import { UsersService } from "../users/users.service";
 import { TokensService } from "../auth/tokens.service";
 import { PERMISSION_KEY } from "../rbac/require-permission.decorator";
-import { roleHasPermission, type Permission } from "../rbac/permissions";
+import { roleHasPermission, DESTRUCTIVE_PERMISSIONS, type Permission } from "../rbac/permissions";
 import type { TenantContextData } from "./tenant-context";
 import type { AuthenticatedUser } from "../auth/auth.guard";
 
@@ -53,7 +53,12 @@ export class TenantContextGuard implements CanActivate {
     const user = await this.usersService.findById(payload.sub);
     if (!user) throw new UnauthorizedException("User no longer exists");
 
-    request.user = { id: user._id.toString(), email: user.email, isPlatformAdmin: user.isPlatformAdmin };
+    request.user = {
+      id: user._id.toString(),
+      email: user.email,
+      isPlatformAdmin: user.isPlatformAdmin,
+      impersonatorId: payload.impersonatorId,
+    };
 
     const orgId = request.headers["x-org-id"];
     if (!orgId || typeof orgId !== "string") {
@@ -69,6 +74,8 @@ export class TenantContextGuard implements CanActivate {
       tenantId: orgId,
       userId: request.user.id,
       role: membership.role,
+      impersonatorId: request.user.impersonatorId,
+      ip: request.ip,
     };
 
     const requiredPermission = this.reflector.getAllAndOverride<Permission | undefined>(PERMISSION_KEY, [
@@ -78,6 +85,18 @@ export class TenantContextGuard implements CanActivate {
 
     if (requiredPermission && !roleHasPermission(membership.role, requiredPermission)) {
       throw new ForbiddenException(`Role '${membership.role}' does not have permission '${requiredPermission}'`);
+    }
+
+    // An admin impersonating a user is restricted from destructive actions
+    // regardless of the impersonated user's actual role — see ADR 0005.
+    if (
+      request.user.impersonatorId &&
+      requiredPermission &&
+      DESTRUCTIVE_PERMISSIONS.has(requiredPermission)
+    ) {
+      throw new ForbiddenException(
+        `'${requiredPermission}' is not permitted while impersonating another user`,
+      );
     }
 
     return true;

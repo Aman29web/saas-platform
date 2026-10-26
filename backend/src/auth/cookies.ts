@@ -34,3 +34,32 @@ export function clearAuthCookies(res: Response, config: ConfigService<ApiEnv, tr
   res.clearCookie("access_token", { path: "/", domain });
   res.clearCookie("refresh_token", { path: "/", domain });
 }
+
+/**
+ * Impersonation swaps `access_token` for a token scoped to the target
+ * user, so the admin's own access token is stashed here first — "exit
+ * impersonation" restores it rather than forcing the admin to log back in.
+ * No refresh token is issued for the impersonation session itself: it is
+ * bounded by its own short expiry, not refreshable indefinitely.
+ */
+export function setImpersonationCookies(
+  res: Response,
+  config: ConfigService<ApiEnv, true>,
+  tokens: { adminAccessToken: string; impersonationAccessToken: string },
+) {
+  const isProd = config.get("NODE_ENV", { infer: true }) === "production";
+  const domain = config.get("COOKIE_DOMAIN", { infer: true });
+  const cookieOpts = { httpOnly: true, secure: isProd, sameSite: "lax" as const, path: "/", domain };
+
+  res.cookie("admin_access_token", tokens.adminAccessToken, { ...cookieOpts, maxAge: 60 * 60 * 1000 });
+  res.cookie("access_token", tokens.impersonationAccessToken, { ...cookieOpts, maxAge: 15 * 60 * 1000 });
+}
+
+export function restoreAdminCookies(res: Response, config: ConfigService<ApiEnv, true>, adminAccessToken: string) {
+  const isProd = config.get("NODE_ENV", { infer: true }) === "production";
+  const domain = config.get("COOKIE_DOMAIN", { infer: true });
+  const cookieOpts = { httpOnly: true, secure: isProd, sameSite: "lax" as const, path: "/", domain };
+
+  res.cookie("access_token", adminAccessToken, { ...cookieOpts, maxAge: 15 * 60 * 1000 });
+  res.clearCookie("admin_access_token", { path: "/", domain });
+}
