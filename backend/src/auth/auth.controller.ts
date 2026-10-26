@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Throttle } from "@nestjs/throttler";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { AuthGuard, type AuthenticatedUser } from "./auth.guard";
@@ -28,6 +29,10 @@ export class AuthController {
     private readonly config: ConfigService<ApiEnv, true>,
   ) {}
 
+  // Stricter than the global default (100/min): credential-guessing and
+  // mass-account-creation endpoints are exactly where per-IP rate limiting
+  // earns its keep.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post("signup")
   async signup(@Body(new ZodValidationPipe(signupSchema)) dto: SignupDto, @Res({ passthrough: true }) res: Response) {
     const { user, org, tokens } = await this.authService.signup(dto);
@@ -38,6 +43,7 @@ export class AuthController {
     };
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post("login")
   @HttpCode(200)
   async login(@Body(new ZodValidationPipe(loginSchema)) dto: LoginDto, @Res({ passthrough: true }) res: Response) {

@@ -7,4 +7,9 @@ module.exports = {
   collectCoverageFrom: ["**/*.(t|j)s"],
   coverageDirectory: "../coverage",
   testEnvironment: "node",
+  // Many suites each spin up their own MongoMemoryReplSet; running them
+  // fully parallel across all CPU cores can exhaust memory on smaller
+  // CI/dev machines (observed as workers crashing with SIGTERM). Capping
+  // concurrency trades some wall-clock time for reliability.
+  maxWorkers: 4,
 };

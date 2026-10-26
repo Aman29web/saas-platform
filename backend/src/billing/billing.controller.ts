@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { TenantContextGuard } from "../tenancy/tenant-context.guard";
 import { TenantContextInterceptor } from "../tenancy/tenant-context.interceptor";
 import { RequirePermission } from "../rbac/require-permission.decorator";
@@ -18,6 +19,7 @@ import {
 @UseGuards(TenantContextGuard)
 @UseInterceptors(TenantContextInterceptor)
 @RequirePermission("org:billing:manage")
+@Throttle({ default: { limit: 20, ttl: 60_000 } })
 export class BillingController {
   constructor(
     private readonly billingService: BillingService,
