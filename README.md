@@ -285,3 +285,5 @@ cross-tenant reads, gated to platform admins and logged before it runs.
 Full rationale, the two non-obvious NestJS pitfalls that shaped the
 guard/interceptor split, and the cross-tenant proof test are in
 [ADR 0001](docs/adr/0001-tenant-isolation.md).
+#   s a a s - p l a t f o r m  
+ 
